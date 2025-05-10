@@ -1,0 +1,2324 @@
+"Material de Uso Obrigatório
+As bibliotecas CDK e RTS de apoio ao desenvolvimento do projecto são de uso obrigatório:
+CDK20 - "Compiler Development Kit" media:libcdk20-202408310000.tar.bz2
+RTS6 - "Run Time System" media:librts6-20250414131211.tar.bz2
+A máquina virtual, fornecida para desenvolvimento do projecto, já contém todo o material de apoio.
+Uso Obrigatório: Repositório GIT
+Apenas se consideram para avaliação os projectos existentes no repositório GIT oficial. Apenas se considera para avaliação o ramo main.
+Trabalhos não presentes no repositório no final do prazo têm classificação 0 (zero) (não são aceites outras formas de entrega). Não são admitidas justificações para atrasos em sincronizações do repositório. A indisponibilidade temporária do repositório, desde que inferior a 24 horas, não justifica atrasos na submissão de um trabalho.
+
+Contents
+1 Tipos de Dados
+2 Manipulação de Nomes
+2.1 Espaço de nomes e visibilidade dos identificadores
+2.2 Validade das variáveis
+3 Convenções Lexicais
+3.1 Caracteres brancos
+3.2 Comentários
+3.3 Palavras chave
+3.4 Tipos
+3.5 Operadores de expressões
+3.6 Delimitadores e terminadores
+3.7 Identificadores (nomes)
+3.8 Literais
+3.8.1 Inteiros
+3.8.2 Reais em vírgula flutuante
+3.8.3 Cadeias de caracteres
+3.8.4 Ponteiros
+4 Gramática
+4.1 Tipos, identificadores, literais e definição de expressões
+4.2 Left-values
+4.3 Ficheiros
+4.4 Declaração de variáveis
+4.5 Símbolos globais
+4.6 Inicialização
+5 Funções
+5.1 Declaração
+5.2 Invocação
+5.3 Corpo
+5.4 Função principal e execução de programas
+6 Instruções
+6.1 Blocos
+6.2 Instrução condicional
+6.3 Instrução de iteração
+6.4 Instrução de terminação
+6.5 Instrução de continuação
+6.6 Instrução de retorno
+6.7 Expressões como instruções
+6.8 Instruções de impressão
+7 Expressões
+7.1 Expressões primitivas
+7.1.1 Identificadores
+7.1.2 Leitura
+7.1.3 Parênteses curvos
+7.2 Expressões resultantes de avaliação de operadores
+7.2.1 Indexação de ponteiros
+7.2.2 Identidade e simétrico
+7.2.3 Reserva de memória
+7.2.4 Expressão de indicação de posição
+7.2.5 Expressão de dimensão
+7.3 Expressões dependentes de tensores
+7.3.1 Capacidade
+7.3.2 Número de dimensões
+7.3.3 Dimensões
+7.3.4 Indexação
+7.3.5 Redimensionamento
+7.3.6 Contracção
+8 Exemplos
+8.1 Programa com vários módulos
+8.2 Outros testes
+9 Omissões e Erros
+ÉPOCA NORMAL
+
+UDF é uma linguagem imperativa. Este manual apresenta de forma intuitiva as características da linguagem: tipos de dados; manipulação de nomes; convenções lexicais; estrutura/sintaxe; especificação das funções; semântica das instruções; semântica das expressões; e, finalmente, alguns exemplos.
+
+Tipos de Dados
+A linguagem é fracamente tipificada (são efectuadas algumas conversões implícitas). Existem 4 tipos de dados básicos, todos compatíveis com a linguagem C, e com alinhamento em memória sempre a 32 bits:
+
+Tipos numéricos: os inteiros, em complemento para 2, ocupam 4 bytes; os reais, em vírgula flutuante, ocupam 8 bytes (IEEE 754).
+As cadeias de caracteres são vectores de caracteres terminados por ASCII NUL (carácter com o valor zero). Variáveis e literais deste tipo só podem ser utilizados em atribuições, impressões, ou como argumentos/retornos de funções. Os caracteres são valores de 8 bits não directamente manipuláveis.
+Os ponteiros representam endereços de objectos e ocupam 4 bytes. Podem ser objecto de operações aritméticas (deslocamentos) e permitem aceder ao valor apontado.
+Existem ainda tipos associados a tensores, i.e., tipos que descrevem estruturas multidimensionais (ver abaixo). Os valores em memória associados a estes tipos são efectivamente ponteiros, mas para estruturas que representam os tensores e não directamente para os dados. Estes ponteiros não aceitam operações de aritmética de ponteiros ou de indexação (embora ponteiros para estes ponteiros as aceitem).
+
+Os tipos suportados por cada operador e a operação a realizar são indicados na definição das expressões.
+
+Manipulação de Nomes
+Os nomes (identificadores) correspondem a variáveis e funções. Nos pontos que se seguem, usa-se o termo entidade para as designar indiscriminadamente, explicitando-se quando a descrição for válida apenas para um subconjunto.
+
+Espaço de nomes e visibilidade dos identificadores
+O espaço de nomes global é único, pelo que um nome utilizado para designar uma entidade num dado contexto não pode ser utilizado para designar outras (ainda que de natureza diferente).
+
+Os identificadores são visíveis desde a declaração até ao fim do alcance: ficheiro (globais) ou função (locais). A reutilização de identificadores em contextos inferiores encobre declarações em contextos superiores: redeclarações locais podem encobrir as globais até ao fim de uma função. Não é possível importar ou definir símbolos globais nos contextos das funções (ver símbolos globais).
+
+Não é possível definir funções dentro de blocos.
+
+Validade das variáveis
+As entidades globais (declaradas fora de qualquer função), existem durante toda a execução do programa. As variáveis locais a uma função existem apenas durante a sua execução. Os argumentos formais são válidos enquanto a função está activa.
+
+Convenções Lexicais
+Para cada grupo de elementos lexicais (tokens), considera-se a maior sequência de caracteres constituindo um elemento válido. Assim, por exemplo, a designação >= é sempre um único elemento lexical (por oposição à situação ilegal de se terem dois símbolos: > seguido de =).
+
+Caracteres brancos
+São considerados separadores e não representam nenhum elemento lexical: mudança de linha ASCII LF (0x0A, \n), recuo do carreto ASCII CR (0x0D, \r), espaço ASCII SP (0x20,  ) e tabulação horizontal ASCII HT (0x09, \t).
+
+Comentários
+Existem dois tipos de comentários, que também funcionam como elementos separadores:
+
+explicativos -- começam com // e acabam no fim da linha; e
+operacionais -- começam com /* e terminam com */, podendo estar aninhados.
+Se as sequências de início fizerem parte de uma cadeia de caracteres, não iniciam um comentário (ver definição das cadeias de caracteres).
+
+Palavras chave
+As seguintes palavras-chave são reservadas, não constituindo identificadores (devem ser escritas exactamente como indicado):
+
+tipos: int real ptr string tensor void
+declarações: forward public auto
+instruções: if elif else for break continue return write writeln
+expressões: input nullptr objects sizeof
+O identificador udf, embora não reservado, quando refere uma função, corresponde à função principal, devendo ser declarado público.
+
+Tipos
+Os seguintes elementos lexicais designam tipos em declarações (ver gramática): int (inteiro), real (real), string (cadeia de caracteres), tensor (tensores), auto (tipo inferido a partir do valor inicial), ptr (ponteiros). Ver gramática.
+
+O tipo especial auto é utilizado para indicar que o tipo da variável ou do retorno da função deve ser inferido a partir do tipo do seu valor inicial. Quando aplicado a uma função, implica que o tipo de retorno deve ser inferido a partir da expressão que é usada na instrução return (se existirem múltiplas, todas devem concordar no tipo a retornar).
+
+O tipo auto pode ser utilizado para definir ponteiros genéricos (como void* em C/C++), compatíveis com todos os tipos de ponteiros. São ainda o único tipo de ponteiro convertível para um número inteiro (o valor do inteiro é o valor do endereço de memória). O nível de aninhamento é irrelevante neste caso, i.e., ptr<auto> designa o mesmo tipo que ptr<ptr<...ptr<auto>...>>. O uso da palavra void neste contexto é idêntico.
+
+Operadores de expressões
+São considerados operadores os elementos lexicais apresentados na definição das expressões.
+
+Delimitadores e terminadores
+Os seguintes elementos lexicais são delimitadores/terminadores: , (vírgula), ; (ponto e vírgula), e ( e ) (delimitadores de expressões).
+
+Identificadores (nomes)
+São iniciados por uma letra, seguindo-se 0 (zero) ou mais letras, dígitos ou _ (sublinhado). O comprimento do nome é ilimitado e dois nomes são distintos se houver alteração de maiúscula para minúscula, ou vice-versa, de pelo menos um carácter.
+
+Literais
+São notações para valores constantes de alguns tipos da linguagem (não confundir com constantes, i.e., identificadores que designam elementos cujo valor não pode ser alterado durante a execução do programa).
+
+Inteiros
+Um literal inteiro é um número não negativo. Uma constante inteira pode, contudo, ser negativa: números negativos são construídos pela aplicação do operador de negação aritmética unária (-) a um literal positivo.
+
+Literais inteiros decimais são constituídos por sequências de 1 (um) ou mais dígitos de 0 a 9.
+
+Literais inteiros hexadecimais começam sempre com a sequência 0x, seguida de um ou mais dígitos de 0 a 9 ou de a a f (sem distinguir maiúsculas de minúsculas). As letras de a a f representam os valores de 10 a 15 respectivamente. Exemplo: 0x07.
+
+Se não for possível representar o literal inteiro na máquina, devido a um overflow, deverá ser gerado um erro lexical.
+
+Reais em vírgula flutuante
+Os literais reais positivos são expressos tal como em C (apenas é suportada a base 10).
+
+Não existem literais negativos (números negativos resultam da aplicação da operação de negação unária).
+
+Um literal sem . (ponto decimal) nem parte exponencial é do tipo inteiro.
+
+Se não for possível representar o literal real na máquina, devido a um overflow, deverá ser gerado um erro lexical.
+
+Exemplos: 3.14, 1E3 = 1000 (número inteiro representado em virgula flutuante). 12.34e-24 = 12.34 x 10-24 (notação cientifica).
+
+Cadeias de caracteres
+As cadeias de caracteres são delimitadas por aspas (") e podem conter quaisquer caracteres, excepto ASCII NULL (0x00 \0). Nas cadeias, os delimitadores de comentários não têm significado especial. Se for escrito um literal que contenha \0, então a cadeia termina nessa posição. Exemplo: "ab\0xy" tem o mesmo significado que "ab".
+
+É possível designar caracteres por sequências especiais (iniciadas por \), especialmente úteis quando não existe representação gráfica directa. As sequências especiais correspondem aos caracteres ASCII LF, CR e HT (\n, \r e \t, respectivamente), aspa (\"), barra (\\), ou a quaisquer outros especificados através de 1 ou 2 digitos hexadecimais (e.g. \0a ou apenas \a se o carácter seguinte não representar um dígito hexadecimal).
+
+Elementos lexicais distintos que representem duas ou mais cadeias consecutivas são representadas na linguagem como uma única cadeia que resulta da concatenação.
+
+Exemplos:
+
+"ab" "cd" é o mesmo que "abcd".
+"ab" /* comentário com "cadeia de caracteres falsa" */ "cd" é o mesmo que "abcd".
+Ponteiros
+O único literal admissível para ponteiros é indicado pela palavra reservada nullptr, indicando o ponteiro nulo.
+
+Gramática
+A gramática da linguagem está resumida abaixo. Considerou-se que os elementos em tipo fixo são literais; que os parênteses curvos agrupam elementos: ( e ); que elementos alternativos são separados por uma barra vertical: |; que elementos opcionais estão entre parênteses rectos: [ e ]; que os elementos que se repetem zero ou mais vezes estão entre ⟨ e ⟩. Alguns elementos usados na gramática também são elementos da linguagem descrita se representados em tipo fixo (e.g., parênteses).
+
+ficheiro	→	declaração ⟨ declaração ⟩
+declaração	→	variável ; | função
+variável	→	[ public | forward ] tipo identificador [ = expressão ]
+→	[ public ] auto identificador = expressão
+função	→	[ public | forward ] ( tipo | auto ) identificador ( [ variáveis ] ) [ bloco ]
+variáveis	→	variável ⟨ , variável ⟩
+tipo	→	int | real | string | void | tensor< dimensão ⟨ , dimensão ⟩ > | ptr< ( tipo | auto ) >
+bloco	→	{ ⟨ declaração ⟩ ⟨ instrução ⟩ }
+instrução	→	expressão ; | write expressões ; | writeln expressões ;
+→	break | continue | return [ expressões ] ;
+→	instrução-condicional | instrução-de-iteração | bloco
+expressões	→	expressão ⟨ , expressão ⟩
+instrução-condicional	→	if ( expressão ) instrução
+→	if ( expressão ) instrução ⟨ elif ( expressão ) instrução ⟩ [ else instrução ]
+instrução-de-iteração	→	for ( [ variáveis ] ; [ expressões ] ; [ expressões ] ) instrução
+→	for ( [ expressões ] ; [ expressões ] ; [ expressões ] ) instrução
+Tipos, identificadores, literais e definição de expressões
+Algumas definições foram omitidas da gramática: tipos de dados, identificador (ver identificadores), literal (ver literais); expressão (ver expressões), dimensão (corresponde a um literal inteiro).
+
+Left-values
+Os left-values são posições de memória que podem ser modificadas (excepto onde proibido pelo tipo de dados). Os elementos de uma expressão que podem ser utilizados como left-values encontram-se individualmente identificados na semântica das expressões.
+
+Ficheiros
+Um ficheiro é designado por principal se contiver a função principal (a que inicia o programa).
+
+Declaração de variáveis
+Uma declaração de variável indica sempre um tipo de dados e um identificador. Não podem ser declaradas variáveis do tipo especial void.
+
+Exemplos:
+
+Inteiro: int i
+Real: real r
+Cadeia de caracteres: string s
+Ponteiro para inteiro: ptr<int> p1 (equivalente a int* em C)
+Ponteiro para real: ptr<real> p2 (equivalente a double* em C)
+Ponteiro para cadeia de caracteres: ptr<string> p3 (equivalente a char** em C)
+Ponteiro para ponteiro para inteiro: ptr<ptr<int>> p4 (equivalente a int** em C)
+Ponteiro genérico: ptr<auto> p5 (equivalente a void* em C)
+Tensor de 3 dimensões (7x8x9) inicializado com zeros: tensor<7,8,9> t
+Símbolos globais
+Por omissão, os símbolos são privados a um módulo, não podendo ser importados por outros módulos.
+
+A palavra chave public permite declarar um identificador como público, tornando-o acessível a partir de outros módulos.
+
+A palavra chave forward permite declarar num módulo entidades definidas em outros módulos (por este motivo, os símbolos por ela declarados são também implicitamente públicos). As entidades não podem ser inicializadas nestas declarações. A definição de funções em avanço, privadas a um módulo, são feitas omitindo o corpo da função, i.e., sem usar esta palavra.
+
+Exemplos:
+
+Declarar variável privada ao módulo: real pi = 22
+Declarar variável pública: public real pi = 22
+Usar definição externa: forward real pi
+Inicialização
+Quando existe, é uma expressão que segue o sinal = ("igual"): inteira, real, ponteiro. Entidades reais podem ser inicializadas por expressões inteiras (conversão implícita). A expressão de inicialização deve ser um literal se a variável for global. A declaração de um tensor sem um valor inicial explícito implica a sua inicialização com zeros.
+
+As cadeias de caracteres são (possivelmente) inicializadas com uma lista não nula de valores sem separadores.
+
+Exemplos:
+
+Inteiro (literal): int i = 3
+Inteiro (expressão): int i = j+1
+Real (literal): real r = 3.2
+Real (expressão): real r = i - 2.5 + f(3)
+Cadeia de caracteres (literal): string s = "olá"
+Cadeia de caracteres (literais): string s = "olá" "mãe"
+Ponteiro (literal): ptr<ptr<ptr<real>>> p = nullptr
+Ponteiro (expressão): ptr<real> p = q + 1
+Ponteiro (genérico): ptr<auto> p = q
+Tensor (literal): tensor<2,2,3> t = [ [ [1, 2, 3], [4, 5, 6] ], [ [7, 8, 9], [10, 11, 12] ] ]
+Tensor (expressão): tensor<2,2,3> t2 = 2 * t1
+Genérica (simples): auto p = 2.1
+Genérica (tensor 2x2): auto t = [[1,2],[3,4]]
+Funções
+Uma função permite agrupar um conjunto de instruções num corpo, executado com base num conjunto de parâmetros (os argumentos formais), quando é invocada a partir de uma expressão.
+
+Declaração
+As funções são sempre designadas por identificadores constantes precedidos do tipo de dados devolvido pela função. Se a função não devolver um valor, é declarada com o tipo de retorno void. Neste caso, a instrução return não admite valores.
+
+As funções que recebam argumentos devem indicá-los no cabeçalho. Funções sem argumentos definem um cabeçalho vazio. Não é possível aplicar os qualificadores de exportação/importação public ou forward (ver símbolos globais) às declarações dos argumentos de uma função. Não é possível especificar valores iniciais (valores por omissão) para argumentos de funções. O tipo auto não pode ser usado para declarar tipos de argumentos (excepto para definição de ponteiros genéricos).
+
+A declaração de uma função sem corpo é utilizada para tipificar um identificador exterior ou para efectuar declarações antecipadas (utilizadas para pré-declarar funções que sejam usadas antes de ser definidas, por exemplo, entre duas funções mutuamente recursivas). Caso a declaração tenha corpo, define-se uma nova função (neste caso, não pode utilizar-se a palavra chave forward).
+
+Invocação
+A função só pode ser invocada através de um identificador que refira uma função previamente declarada ou definida.
+
+Se existirem argumentos, na invocação da função, o identificador é seguido de uma lista de expressões delimitadas por parênteses curvos. Esta lista é uma sequência, possivelmente vazia, de expressões separadas por vírgulas. O número e tipo de parâmetros actuais deve ser igual ao número e tipo dos parâmetros formais da função invocada. A ordem dos parâmetros actuais deverá ser a mesma dos argumentos formais da função a ser invocada.
+
+De acordo com a convenção Cdecl, a função chamadora coloca os argumentos na pilha e é responsável pela sua remoção, após o retorno da chamada. Assim, os parâmetros actuais devem ser colocados na pilha pela ordem inversa da sua declaração (i.e., são avaliados da direita para a esquerda antes da invocação da função e o resultado passado por cópia/valor). O endereço de retorno é colocado no topo da pilha pela chamada à função.
+
+Corpo
+O corpo de uma função consiste num bloco que pode ter declarações (opcionais) seguidas de instruções (opcionais). Uma função sem corpo é uma declaração e é considerada indefinida.
+
+Não é possível aplicar as palavras chave public ou forward (ver símbolos globais) dentro do corpo de uma função.
+
+Uma instrução return causa a interrupção imediata da função, assim como o retorno dos valores indicados como argumento da instrução. Os tipos destes valores têm de concordar com o tipo declarado.
+
+Qualquer sub-bloco (usado, por exemplo, numa instrução condicional ou de iteração) pode definir variáveis.
+
+Função principal e execução de programas
+Um programa inicia-se com a invocação da função udf (sem argumentos). Os argumentos com que o programa foi chamado podem ser obtidos através das seguintes funções:
+
+int argc() (devolve o número de argumentos);
+string argv(int n) (devolve o n-ésimo argumento como uma cadeia de caracteres) (n>0); e
+string envp(int n) (devolve a n-ésima variável de ambiente como uma cadeia de caracteres) (n>0).
+O valor de retorno da função principal é devolvido ao ambiente que invocou o programa. Este valor de retorno segue as seguintes regras (sistema operativo):
+
+0 (zero): execução sem erros;
+1 (um): argumentos inválidos (em número ou valor);
+2 (dois): erro de execução.
+Os valores superiores a 128 indicam que o programa terminou com um sinal. Em geral, para correcto funcionamento, os programas devem retornar 0 (zero) se a execução foi bem sucedida e um valor diferente de 0 (zero) em caso de erro.
+
+A biblioteca de run-time (RTS) contém informação sobre outras funções de suporte disponíveis, incluindo chamadas ao sistema (ver também o manual da RTS).
+
+Instruções
+Excepto quando indicado, as instruções são executadas em sequência.
+
+Blocos
+Cada bloco tem uma zona de declarações de variáveis locais (facultativa), seguida por uma zona com instruções (possivelmente vazia). Não é possível declarar ou definir funções dentro de blocos.
+
+A visibilidade das variáveis é limitada ao bloco em que foram declaradas. As entidades declaradas podem ser directamente utilizadas em sub-blocos ou passadas como argumentos para funções chamadas dentro do bloco. Caso os identificadores usados para definir as variáveis locais já estejam a ser utilizados para definir outras entidades ao alcance do bloco, o novo identificador passa a referir uma nova entidade definida no bloco até que ele termine (a entidade previamente definida continua a existir, mas não pode ser directamente referida pelo seu nome). Esta regra é também válida relativamente a argumentos de funções (ver corpo das funções).
+
+Instrução condicional
+Esta instrução tem comportamento idêntico ao da instrução if-else em C. As partes elif comportam-se como as sequências else if.
+
+Instrução de iteração
+Esta instrução tem comportamento idêntico ao da instrução for em C. Na zona de declaração de variáveis, apenas pode ser usada uma declaração auto, devendo ser, nesse caso, a única.
+
+Instrução de terminação
+A instrução break termina o ciclo mais interior em que a instrução se encontrar, tal como a instrução break em C. Esta instrução só pode existir dentro de um ciclo, sendo a última instrução do seu bloco.
+
+Instrução de continuação
+A instrução continue reinicia o ciclo mais interior em que a instrução se encontrar, tal como a instrução continue em C. Esta instrução só pode existir dentro de um ciclo, sendo a última instrução do seu bloco.
+
+Instrução de retorno
+A instrução return, se existir, é a última instrução do seu bloco. Ver comportamento na descrição do corpo de uma função.
+
+Expressões como instruções
+As expressões utilizadas como instruções são avaliadas, mesmo que não produzam efeitos secundários. A notação é como indicada na gramática (expressão seguida de ;).
+
+Instruções de impressão
+As palavras chave write e writeln podem ser utilizadas para apresentar valores na saída do programa. A primeira apresenta a expressão sem mudar de linha; a segunda apresenta a expressão mudando de linha. Quando existe mais de uma expressão, as várias expressões são apresentadas sem separação. Valores numéricos (inteiros ou reais) são impressos em decimal. As cadeias de caracteres são impressas na codificação nativa. Ponteiros não podem ser impressos.
+
+Expressões
+Uma expressão é uma representação algébrica de uma quantidade: todas as expressões têm um tipo e devolvem um valor.
+
+Existem expressões primitivas e expressões que resultam da avaliação de operadores.
+
+A tabela seguinte apresenta as precedências relativas dos operadores: é a mesma para operadores na mesma linha, sendo as linhas seguintes de menor prioridade que as anteriores. A maioria dos operadores segue a semântica da linguagem C (excepto onde explicitamente indicado). Tal como em C, os valores lógicos são 0 (zero) (valor falso), e diferente de zero (valor verdadeiro).
+
+Além das expressões na tabela, existem ainda algumas especiais sobre tensores (ver abaixo).
+
+Tipo de Expressão	Operadores	Associatividade	Operandos	Semântica
+primária	( ) [ ]	não associativos	-	parênteses curvos, indexação, reserva de memória
+unária	+ - ?	não associativos	-	identidade e simétrico, indicação de posição
+multiplicativa	* / %	da esquerda para a direita	inteiros, reais, tensores	C (% é apenas para inteiros e não pode ser aplicado a tensores). A aplicação dos operadores a tensores resulta em operações coeficiente a coeficiente (se aplicados a dois tensores com a mesma forma) e na operação entre o escalar e cada elemento do tensor (se for aplicados a um tensor e a um escalar).
+aditiva	+ -	da esquerda para a direita	inteiros, reais, ponteiros, tensores	C: se envolverem ponteiros, calculam: (i) deslocamentos, i.e., um dos operandos deve ser do tipo ponteiro e o outro do tipo inteiro; (ii) diferenças de ponteiros, i.e., apenas quando se aplica o operador - a dois ponteiros do mesmo tipo (o resultado é o número de objectos do tipo apontado entre eles). Se a memória não for contígua, o resultado é indefinido. A aplicação dos operadores a tensores resulta em operações coeficiente a coeficiente (se aplicados a dois tensores com a mesma forma) e na operação entre o escalar e cada elemento do tensor (se for aplicados a um tensor e a um escalar).
+comparativa	< > <= >=	da esquerda para a direita	inteiros, reais	C
+igualdade	== !=	da esquerda para a direita	inteiros, reais, ponteiros, tensores	C. A aplicação dos operadores a tensores resulta em operações coeficiente a coeficiente (se aplicados a dois tensores com a mesma forma).
+"não" lógico	~	não associativo	inteiros	C
+"e" lógico	&&	da esquerda para a direita	inteiros	C: o 2º argumento só é avaliado se o 1º não for falso.
+"ou" lógico	||	da esquerda para a direita	inteiros	C: o 2º argumento só é avaliado se o 1º não for verdadeiro.
+atribuição	=	da direita para a esquerda	todos os tipos (excepto tuplos)	O valor da expressão do lado direito do operador é guardado na posição indicada pelo left-value (operando esquerdo do operador). Podem ser atribuídos valores inteiros a left-values reais (conversão automática). Nos outros casos, ambos os tipos têm de concordar.
+Expressões primitivas
+As expressões literais e a invocação de funções foram definidas acima.
+
+Identificadores
+Um identificador é uma expressão se tiver sido declarado. Um identificador pode denotar uma variável.
+
+Um identificador é o caso mais simples de um left-value, ou seja, uma entidade que pode ser utilizada no lado esquerdo (left) de uma atribuição.
+
+Leitura
+A operação de leitura de um valor inteiro ou real pode ser efectuado pela expressão indicada pela palavra reservada input, que devolve o valor lido, de acordo com o tipo esperado (inteiro ou real). Caso se use como argumento dos operadores de impressão ou noutras situações que permitam várias tipos (write ou writeln), deve ser lido um inteiro.
+
+Exemplos: a = input (leitura para a), f(input) (leitura para argumento de função), write input (leitura e impressão).
+
+Parênteses curvos
+Uma expressão entre parênteses curvos tem o valor da expressão sem os parênteses e permite alterar a prioridade dos operadores. Uma expressão entre parênteses não pode ser utilizada como left-value (ver também a expressão de indexação).
+
+Expressões resultantes de avaliação de operadores
+Indexação de ponteiros
+A indexação de ponteiros devolve o valor de uma posição de memória indicada por um ponteiro. Consiste de uma expressão ponteiro seguida do índice entre parênteses rectos. O resultado de uma indexação de ponteiros é um left-value.
+
+Exemplo (acesso à posição 0 da zona de memória indicada por p): p[0]
+
+Identidade e simétrico
+Os operadores identidade (+) e simétrico (-) aplicam-se a inteiros, reais e tensores. Têm o mesmo significado que em C.
+
+A aplicação do operador a tensores resulta na distribuição da operação por todos os coeficientes.
+
+Reserva de memória
+A expressão reserva de memória, indicada por objects (argumento inteiro), devolve o ponteiro que aponta para a zona de memória, na pilha da função actual, contendo espaço suficiente para o número de objectos indicados pelo seu argumento inteiro.
+
+Exemplo (reserva vector com 5 reais, apontados por p): ptr<real> p = objects(5)
+
+Expressão de indicação de posição
+O operador sufixo ? aplica-se a left-values, retornando o endereço (com o tipo ponteiro) correspondente.
+
+Exemplo (indica o endereço de a): a?
+
+Expressão de dimensão
+O operador sizeof aplica-se a expressões, retornando a dimensão correspondente em bytes. Aplicado a um tensor, retorna a capacidade do tensor (em bytes).
+
+Exemplos: sizeof(a) (dimensão de a).
+
+Expressões dependentes de tensores
+Capacidade
+Para um tensor t, o comprimento, indicado por t.capacity (valor inteiro), corresponde ao número de células do tensor (não confundir com sizeof, que indica o número de bytes ocupado por essas células).
+
+Número de dimensões
+Para um tensor t, o número de dimensões é indicado por t.rank (valor inteiro).
+
+Dimensões
+Para um tensor t, as dimensões, indicadas por t.dims (ponteiro para um vector inteiro), correspondem ao vector com as dimensões do tensor. É ainda possível obter uma única dimensão através da função dim: e.g. t.dim(0) (primeira dimensão). São válidas dimensões até ao limite definido por t.rank.
+
+Indexação
+A indexação de tensores devolve o valor de uma posição de um tensor indicada por um conjunto de coordenadas (com início em 0). Consiste de um tensor seguido do operador @ e as coordenadas a indexar. O resultado de uma indexação de tuplos é um left-value.
+
+Exemplo (acesso a uma posição do tensor tridimensional t): t@(x,y,z) (x, y e z são expressões inteiras)
+
+Redimensionamento
+Para um tensor t1, com capacidade D1 x ... x Dn (D1 ... Dn são os comprimentos em cada dimensão), a operação de redimensionamento t.reshape(S1, ..., Sk) (S1 ... Sk são os comprimentos em cada nova dimensão) produz um novo tensor t2 com a mesma capacidade de t1 e, por consequência, onde D1 x ... x Dn == S1 x ... x Sk. Os argumentos de reshape são sempre literais inteiros positivos.
+
+Exemplo:
+
+tensor<2,2,2> t1 = [ [ [1, 2], [3, 4] ], [ [5, 6], [7, 8] ] ]
+tensor<2, 4> t2 = t1.reshape(2,4) // resultado: [ [1, 2, 3, 4], [5, 6, 7, 8] ]
+Contracção
+Dados dois tensores, t1 e t2, a operação de contracção, representada por t1 ** t2 é possível se a última dimensão do primeiro tensor for igual à primeira do segundo tensor. Para matrizes (i.e., tensores de duas dimensões), esta operação corresponde à multiplicação de matrizes habitual. Esta operação tem uma precedência imediatamente superior à da multiplicação habitual. Exemplos:
+
+tensor<3,2,2> t1 = [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 0], [8, 7]]];
+tensor<2,2,3> t2 = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [0, 8, 7]]];
+t1**t2 = Tensor<3,2,2,3>[[[[1.5E1, 1.8E1, 2.1E1], [4, 2.1E1, 2E1]], [[3.1E1, 3.8E1, 4.5E1], [1.2E1, 4.7E1, 4.6E1]]], [[[4.7E1, 5.8E1, 6.9E1], [2E1, 7.3E1, 7.2E1]], [[6.3E1, 7.8E1, 9.3E1], [2.8E1, 9.9E1, 9.8E1]]], [[[9, 1.8E1, 2.7E1], [3.6E1, 4.5E1, 5.4E1]], [[5.7E1, 7.2E1, 8.7E1], [3.2E1, 9.6E1, 9.7E1]]]]
+t2**t1 = Tensor<2,2,2,2>[[[[3.8E1, 1.4E1], [4.1E1, 4.1E1]], [[8.3E1, 3.8E1], [9.5E1, 9.8E1]]], [[[1.28E2, 6.2E1], [1.49E2, 1.55E2]], [[1.03E2, 4.8E1], [1.12E2, 1.13E2]]]]
+Exemplos
+Os exemplos não são exaustivos e não ilustram todos os aspectos da linguagem. Podem obter-se outros na página da disciplina.
+
+Programa com vários módulos
+Definição da função factorial num ficheiro (factorial.udf):
+
+public int factorial(int n) {
+  if (n > 1) return n * factorial(n-1); else return 1;
+}
+Exemplo da utilização da função factorial num outro ficheiro (main.udf):
+
+// external builtin functions
+forward int argc()
+forward string argv(int n)
+forward int atoi(string s)
+
+// external user functions
+forward int factorial(int n)
+
+// the main function
+public int udf() {
+  int f = 1;
+  writeln "Teste para a função factorial";
+  if (argc() == 2) f = atoi(argv(1));
+  writeln f, "! = ", factorial(f);
+  return 0;
+}
+Como compilar:
+
+udf --target asm factorial.udf
+udf --target asm main.udf
+yasm -gdwarf2 -felf32 factorial.asm
+yasm -gdwarf2 -felf32 main.asm
+ld -melf_i386 -o main factorial.o main.o -lrts
+Outros testes
+Estão disponíveis outros pacotes de testes.
+
+Omissões e Erros
+Casos omissos e erros serão corrigidos em futuras versões do manual de referência.
+
+"  "A 1ª entrega consiste em criar todas as classes para os nós da AST necessários para a linguagem UDF. Embora a CDK já tenha alguns nós pré-definidos, estes não são suficientes.
+
+Além da criação das classes, é necessário implementar um esqueleto dos visitors (xml_writer, postfix_writer, etc). Este código não necessita de estar funcional, mas tem que compilar.
+
+Não é ainda necessário implementar nenhum código de análise lexical, sintáctica ou semântica."$ tree
+.
+├── 037
+│   ├── ast
+│   │   ├── evaluation_node.h
+│   │   ├── if_else_node.h
+│   │   ├── if_node.h
+│   │   ├── print_node.h
+│   │   ├── program_node.h
+│   │   ├── read_node.h
+│   │   └── while_node.h
+│   ├── factory.cpp
+│   ├── factory.h
+│   ├── Makefile
+│   ├── README.md
+│   ├── targets
+│   │   ├── basic_ast_visitor.h
+│   │   ├── postfix_target.cpp
+│   │   ├── postfix_target.h
+│   │   ├── postfix_writer.cpp
+│   │   ├── postfix_writer.h
+│   │   ├── symbol.h
+│   │   ├── type_checker.cpp
+│   │   ├── type_checker.h
+│   │   ├── xml_target.cpp
+│   │   ├── xml_target.h
+│   │   ├── xml_writer.cpp
+│   │   └── xml_writer.h
+│   ├── udf_parser.y
+│   ├── udf_scanner.h
+│   └── udf_scanner.l
+└── compiladores
+    └── root
+        └── usr
+            ├── bin
+            │   └── cdk
+            ├── include
+            │   ├── cdk
+            │   │   ├── ast
+            │   │   │   ├── add_node.h
+            │   │   │   ├── all.h
+            │   │   │   ├── and_node.h
+            │   │   │   ├── assignment_node.h
+            │   │   │   ├── basic_node.h
+            │   │   │   ├── binary_operation_node.h
+            │   │   │   ├── data_node.h
+            │   │   │   ├── div_node.h
+            │   │   │   ├── double_node.h
+            │   │   │   ├── eq_node.h
+            │   │   │   ├── expression_node.h
+            │   │   │   ├── ge_node.h
+            │   │   │   ├── gt_node.h
+            │   │   │   ├── integer_node.h
+            │   │   │   ├── le_node.h
+            │   │   │   ├── literal_node.h
+            │   │   │   ├── lt_node.h
+            │   │   │   ├── lvalue_node.h
+            │   │   │   ├── mod_node.h
+            │   │   │   ├── mul_node.h
+            │   │   │   ├── ne_node.h
+            │   │   │   ├── nil_node.h
+            │   │   │   ├── not_node.h
+            │   │   │   ├── or_node.h
+            │   │   │   ├── rvalue_node.h
+            │   │   │   ├── sequence_node.h
+            │   │   │   ├── string_node.h
+            │   │   │   ├── sub_node.h
+            │   │   │   ├── typed_node.h
+            │   │   │   ├── unary_minus_node.h
+            │   │   │   ├── unary_operation_node.h
+            │   │   │   ├── unary_plus_node.h
+            │   │   │   ├── variable_node.h
+            │   │   │   └── visitor_decls.h
+            │   │   ├── basic_factory.h
+            │   │   ├── basic_parser.h
+            │   │   ├── basic_scanner.h
+            │   │   ├── compiler.h
+            │   │   ├── emitters
+            │   │   │   ├── basic_postfix_emitter.h
+            │   │   │   ├── postfix_debug_emitter.h
+            │   │   │   └── postfix_ix86_emitter.h
+            │   │   ├── symbol_table.h
+            │   │   ├── targets
+            │   │   │   └── basic_target.h
+            │   │   ├── types
+            │   │   │   ├── basic_type.h
+            │   │   │   ├── functional_type.h
+            │   │   │   ├── primitive_type.h
+            │   │   │   ├── reference_type.h
+            │   │   │   ├── structured_type.h
+            │   │   │   ├── tensor_type.h
+            │   │   │   ├── typename_type.h
+            │   │   │   └── types.h
+            │   │   ├── yy_factory.h
+            │   │   ├── yy_parser.h
+            │   │   └── yy_scanner.h
+            │   └── rts
+            ├── lib
+            │   ├── libcdk.a
+            │   └── librts.a
+            └── share
+                └── doc
+                    └── packages
+                        └── cdk
+
+20 directories, 83 files
+
+From the base code (037 directory):
+udf_parser.y: %{
+//-- don't change *any* of these: if you do, you'll break the compiler.
+#include <algorithm>
+#include <memory>
+#include <cstring>
+#include <cdk/compiler.h>
+#include <cdk/types/types.h>
+#include ".auto/all_nodes.h"
+#define LINE                         compiler->scanner()->lineno()
+#define yylex()                      compiler->scanner()->scan()
+#define yyerror(compiler, s)         compiler->scanner()->error(s)
+//-- don't change *any* of these --- END!
+%}
+
+%parse-param {std::shared_ptr<cdk::compiler> compiler}
+
+%union {
+  //--- don't change *any* of these: if you do, you'll break the compiler.
+  YYSTYPE() : type(cdk::primitive_type::create(0, cdk::TYPE_VOID)) {}
+  ~YYSTYPE() {}
+  YYSTYPE(const YYSTYPE &other) { *this = other; }
+  YYSTYPE& operator=(const YYSTYPE &other) { type = other.type; return *this; }
+
+  std::shared_ptr<cdk::basic_type> type;        /* expression type */
+  //-- don't change *any* of these --- END!
+
+  int                   i;          /* integer value */
+  std::string          *s;          /* symbol name or string literal */
+  cdk::basic_node      *node;       /* node pointer */
+  cdk::sequence_node   *sequence;
+  cdk::expression_node *expression; /* expression nodes */
+  cdk::lvalue_node     *lvalue;
+};
+
+%token <i> tINTEGER
+%token <s> tIDENTIFIER tSTRING
+%token tWHILE tIF tPRINT tREAD tBEGIN tEND
+
+%nonassoc tIFX
+%nonassoc tELSE
+
+%right '='
+%left tGE tLE tEQ tNE '>' '<'
+%left '+' '-'
+%left '*' '/' '%'
+%nonassoc tUNARY
+
+%type <node> stmt program
+%type <sequence> list
+%type <expression> expr
+%type <lvalue> lval
+
+%{
+//-- The rules below will be included in yyparse, the main parsing function.
+%}
+%%
+
+program : tBEGIN list tEND { compiler->ast(new udf::program_node(LINE, $2)); }
+        ;
+
+list : stmt      { $$ = new cdk::sequence_node(LINE, $1); }
+     | list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
+     ;
+
+stmt : expr ';'                         { $$ = new udf::evaluation_node(LINE, $1); }
+     | tPRINT expr ';'                  { $$ = new udf::print_node(LINE, $2); }
+     | tREAD lval ';'                   { $$ = new udf::read_node(LINE, $2); }
+     | tWHILE '(' expr ')' stmt         { $$ = new udf::while_node(LINE, $3, $5); }
+     | tIF '(' expr ')' stmt %prec tIFX { $$ = new udf::if_node(LINE, $3, $5); }
+     | tIF '(' expr ')' stmt tELSE stmt { $$ = new udf::if_else_node(LINE, $3, $5, $7); }
+     | '{' list '}'                     { $$ = $2; }
+     ;
+
+expr : tINTEGER              { $$ = new cdk::integer_node(LINE, $1); }
+     | tSTRING               { $$ = new cdk::string_node(LINE, $1); }
+     | '-' expr %prec tUNARY { $$ = new cdk::unary_minus_node(LINE, $2); }
+     | '+' expr %prec tUNARY { $$ = new cdk::unary_plus_node(LINE, $2); }
+     | expr '+' expr         { $$ = new cdk::add_node(LINE, $1, $3); }
+     | expr '-' expr         { $$ = new cdk::sub_node(LINE, $1, $3); }
+     | expr '*' expr         { $$ = new cdk::mul_node(LINE, $1, $3); }
+     | expr '/' expr         { $$ = new cdk::div_node(LINE, $1, $3); }
+     | expr '%' expr         { $$ = new cdk::mod_node(LINE, $1, $3); }
+     | expr '<' expr         { $$ = new cdk::lt_node(LINE, $1, $3); }
+     | expr '>' expr         { $$ = new cdk::gt_node(LINE, $1, $3); }
+     | expr tGE expr         { $$ = new cdk::ge_node(LINE, $1, $3); }
+     | expr tLE expr         { $$ = new cdk::le_node(LINE, $1, $3); }
+     | expr tNE expr         { $$ = new cdk::ne_node(LINE, $1, $3); }
+     | expr tEQ expr         { $$ = new cdk::eq_node(LINE, $1, $3); }
+     | '(' expr ')'          { $$ = $2; }
+     | lval                  { $$ = new cdk::rvalue_node(LINE, $1); }
+     | lval '=' expr         { $$ = new cdk::assignment_node(LINE, $1, $3); }
+     ;
+
+lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
+     ;
+
+%%
+
+udf_scanner.l: %option c++ prefix="udf_scanner_" outfile="udf_scanner.cpp"
+%option stack noyywrap yylineno 8bit debug
+%{ 
+// make relevant includes before including the parser's tab file
+#include <string>
+#include <cdk/ast/sequence_node.h>
+#include <cdk/ast/expression_node.h>
+#include <cdk/ast/lvalue_node.h>
+#include "udf_parser.tab.h"
+
+// don't change this
+#define yyerror LexerError
+%}
+%x X_STRING
+%%
+  yydebug=1; set_debug(1);
+
+"--".*                 ; /* ignore comments */
+
+">="                   return tGE; 
+"<="                   return tLE; 
+"=="                   return tEQ; 
+"!="                   return tNE; 
+
+"while"                return tWHILE; 
+"if"                   return tIF; 
+"else"                 return tELSE; 
+"print"                return tPRINT; 
+"read"                 return tREAD; 
+"begin"                return tBEGIN; 
+"end"                  return tEND; 
+
+[A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
+
+\'                     yy_push_state(X_STRING); yylval.s = new std::string("");
+<X_STRING>\'           yy_pop_state(); return tSTRING;
+<X_STRING>\\\'         *yylval.s += yytext + 1;
+<X_STRING>.            *yylval.s += yytext;
+<X_STRING>\n           yyerror("newline in string");
+
+[0-9]+                 yylval.i = strtol(yytext, nullptr, 10); return tINTEGER;
+
+[-()<>=+*/%;{}.]       return *yytext;
+
+[ \t\n]+               ; /* ignore whitespace */
+
+.                      yyerror("Unknown character");
+
+%%
+factory.h and factory.cpp: #pragma once
+
+#include <memory>
+#include <cdk/yy_factory.h>
+#include "udf_scanner.h"
+
+namespace udf {
+
+  /**
+   * This class implements the compiler factory for the udf compiler.
+   */
+  class factory: public cdk::yy_factory<udf_scanner> {
+    /**
+     * This object is automatically registered by the constructor in the
+     * superclass' language registry.
+     */
+    static factory _self;
+
+  protected:
+    /**
+     * @param language name of the language handled by this factory (see .cpp file)
+     */
+    factory(const std::string &language = "udf") :
+        cdk::yy_factory<udf_scanner>(language) {
+    }
+
+  };
+
+} // udf
+#include "factory.h"
+
+/**
+ * This object is automatically registered by the constructor in the
+ * superclass' language registry.
+ */
+udf::factory udf::factory::_self;
+evaluation_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace udf {
+
+  /**
+   * Class for describing evaluation nodes.
+   */
+  class evaluation_node : public cdk::basic_node {
+    cdk::expression_node *_argument;
+
+  public:
+    evaluation_node(int lineno, cdk::expression_node *argument) :
+        cdk::basic_node(lineno), _argument(argument) {
+    }
+
+    cdk::expression_node *argument() { return _argument; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_evaluation_node(this, level); }
+
+  };
+
+} // udf
+if_else_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace udf {
+
+  /**
+   * Class for describing if-then-else nodes.
+   */
+  class if_else_node : public cdk::basic_node {
+    cdk::expression_node *_condition;
+    cdk::basic_node *_thenblock, *_elseblock;
+
+  public:
+    if_else_node(int lineno, cdk::expression_node *condition, cdk::basic_node *thenblock,
+                 cdk::basic_node *elseblock) :
+        cdk::basic_node(lineno), _condition(condition), _thenblock(thenblock), _elseblock(elseblock) {
+    }
+
+    cdk::expression_node *condition() { return _condition; }
+
+    cdk::basic_node *thenblock() { return _thenblock; }
+
+    cdk::basic_node *elseblock() { return _elseblock; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_if_else_node(this, level); }
+
+  };
+
+} // udf
+if_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace udf {
+
+  /**
+   * Class for describing if-then nodes.
+   */
+  class if_node : public cdk::basic_node {
+    cdk::expression_node *_condition;
+    cdk::basic_node *_block;
+
+  public:
+    if_node(int lineno, cdk::expression_node *condition, cdk::basic_node *block) :
+        cdk::basic_node(lineno), _condition(condition), _block(block) {
+    }
+
+    cdk::expression_node *condition() { return _condition; }
+
+    cdk::basic_node *block() { return _block; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_if_node(this, level); }
+
+  };
+
+} // udf
+print_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace udf {
+
+  /**
+   * Class for describing print nodes.
+   */
+  class print_node : public cdk::basic_node {
+    cdk::expression_node *_argument;
+
+  public:
+    print_node(int lineno, cdk::expression_node *argument) :
+        cdk::basic_node(lineno), _argument(argument) {
+    }
+
+    cdk::expression_node *argument() { return _argument; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_print_node(this, level); }
+
+  };
+
+} // udf
+program_nod.h: #pragma once
+
+#include <cdk/ast/basic_node.h>
+
+namespace udf {
+
+  /**
+   * Class for describing program nodes.
+   */
+  class program_node : public cdk::basic_node {
+    cdk::basic_node *_statements;
+
+  public:
+    program_node(int lineno, cdk::basic_node *statements) :
+        cdk::basic_node(lineno), _statements(statements) {
+    }
+
+    cdk::basic_node *statements() { return _statements; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_program_node(this, level); }
+
+  };
+
+} // udf
+read_node.h: #pragma once
+
+#include <cdk/ast/lvalue_node.h>
+
+namespace udf {
+
+  /**
+   * Class for describing read nodes.
+   */
+  class read_node : public cdk::basic_node {
+    cdk::lvalue_node *_argument;
+
+  public:
+    read_node(int lineno, cdk::lvalue_node *argument) :
+        cdk::basic_node(lineno), _argument(argument) {
+    }
+
+    cdk::lvalue_node *argument() { return _argument; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_read_node(this, level); }
+
+  };
+
+} // udf
+while_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace udf {
+
+  /**
+   * Class for describing while-cycle nodes.
+   */
+  class while_node : public cdk::basic_node {
+    cdk::expression_node *_condition;
+    cdk::basic_node *_block;
+
+  public:
+    while_node(int lineno, cdk::expression_node *condition, cdk::basic_node *block) :
+        basic_node(lineno), _condition(condition), _block(block) {
+    }
+
+    cdk::expression_node *condition() { return _condition; }
+
+    cdk::basic_node *block() { return _block; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_while_node(this, level); }
+
+  };
+
+} // udf
+From the targets directory:
+basic_ast_visitor.h: #pragma once
+
+#include <string>
+#include <memory>
+#include <iostream>
+#include <cdk/compiler.h>
+#include <cdk/symbol_table.h>
+#include "targets/symbol.h"
+
+/* do not edit -- include node forward declarations */
+#define __NODE_DECLARATIONS_ONLY__
+#include ".auto/all_nodes.h"  // automatically generated
+#undef __NODE_DECLARATIONS_ONLY__
+/* do not edit -- end */
+
+//!
+//! Print nodes as XML elements to the output stream.
+//!
+class basic_ast_visitor {
+protected:
+  //! The owner compiler
+  std::shared_ptr<cdk::compiler> _compiler;
+
+private:
+
+  // last symbol inserted in symbol table
+  std::shared_ptr<udf::symbol> _new_symbol;
+
+protected:
+  basic_ast_visitor(std::shared_ptr<cdk::compiler> compiler) :
+      _compiler(compiler) {
+  }
+
+  bool debug() {
+    return _compiler->debug();
+  }
+
+  std::ostream &os() {
+    return *_compiler->ostream();
+  }
+
+public:
+  virtual ~basic_ast_visitor() {
+  }
+
+public:
+  std::shared_ptr<udf::symbol> new_symbol() {
+    return _new_symbol;
+  }
+
+  void set_new_symbol(std::shared_ptr<udf::symbol> symbol) {
+    _new_symbol = symbol;
+  }
+
+  void reset_new_symbol() {
+    _new_symbol = nullptr;
+  }
+
+public:
+  // do not edit these lines
+#define __IN_VISITOR_HEADER__
+#define __PURE_VIRTUAL_DECLARATIONS_ONLY__
+#include ".auto/visitor_decls.h"       // automatically generated
+#undef __PURE_VIRTUAL_DECLARATIONS_ONLY__
+#undef __IN_VISITOR_HEADER__
+  // do not edit these lines: end
+
+};
+xml_target.h and xml_target.cpp: #pragma once
+
+#include <cdk/targets/basic_target.h>
+#include <cdk/ast/basic_node.h>
+#include "targets/xml_writer.h"
+
+namespace udf {
+
+  class xml_target: public cdk::basic_target {
+    static xml_target _self;
+
+  private:
+    xml_target() :
+        cdk::basic_target("xml") {
+    }
+
+  public:
+    bool evaluate(std::shared_ptr<cdk::compiler> compiler) {
+      // this symbol table will be used to check identifiers
+      // an exception will be thrown if identifiers are used before declaration
+      cdk::symbol_table<udf::symbol> symtab;
+
+      xml_writer writer(compiler, symtab);
+      compiler->ast()->accept(&writer, 0);
+      return true;
+    }
+
+  };
+
+} // udf
+#include "targets/xml_target.h"
+
+/** @var create and register an XML targets. */
+udf::xml_target udf::xml_target::_self;
+postfix_target.h and postfix_target.cp: #pragma once
+
+#include <cdk/targets/basic_target.h>
+#include <cdk/ast/basic_node.h>
+#include "targets/postfix_writer.h"
+
+#include <cdk/emitters/postfix_ix86_emitter.h>
+
+namespace udf {
+
+  class postfix_target: public cdk::basic_target {
+    static postfix_target _self;
+
+  private:
+    postfix_target() :
+        cdk::basic_target("asm") {
+    }
+
+  public:
+    bool evaluate(std::shared_ptr<cdk::compiler> compiler) {
+      // this symbol table will be used to check identifiers
+      // during code generation
+      cdk::symbol_table<udf::symbol> symtab;
+
+      // this is the backend postfix machine
+      cdk::postfix_ix86_emitter pf(compiler);
+
+      // generate assembly code from the syntax tree
+      postfix_writer writer(compiler, symtab, pf);
+      compiler->ast()->accept(&writer, 0);
+
+      return true;
+    }
+
+  };
+
+} // udf
+#include "targets/postfix_target.h"
+
+/**
+ * Postfix for ix86.
+ * @var create and register an evaluator for ASM targets.
+ */
+udf::postfix_target udf::postfix_target::_self;
+ast/basic_node.h: #pragma once
+
+#include <typeinfo>
+#include <iostream>
+#include "targets/basic_ast_visitor.h"
+
+namespace cdk {
+
+  /**
+   * Class for describing AST nodes.
+   * This is an abstract class and forms the root of the node hierarchy.
+   * The node hierarchy is organized in a structure according to the
+   * <i>Composite</i> design pattern: class <tt>node</tt> is the root
+   * of the hierarchy; class <tt>simple</tt> is a template for leaves
+   * holding simple (atomic) types; <tt>composite</tt> represents the
+   * recursive structure. Note that other recursion classes are possible
+   * by extending any of the classes in this family.
+   */
+  class basic_node {
+    const int _lineno; // source line
+
+  protected:
+    /**
+     * Simple constructor.
+     *
+     * @param lineno the source code line number corresponding to the node
+     */
+    basic_node(int lineno) : _lineno(lineno) {}
+
+  public:
+    virtual ~basic_node() noexcept = default;
+
+  public:
+    /** @return the line number of the corresponding source code */
+    int lineno() const noexcept { return _lineno; }
+
+    /** @return the label of the node (i.e., it's class) */
+    std::string label() const noexcept {
+      std::string fullname = typeid(*this).name();
+      int last = fullname.find_last_of("0123456789");
+      return fullname.substr(last + 1, fullname.length() - last - 1 - 1);
+    }
+
+    /**
+     * Every non-abstract node must provide this method.
+     *
+     * @param av basic AST visitor
+     * @param level syntactic tree level
+     */
+    virtual void accept(basic_ast_visitor *av, int level) = 0;
+
+  };
+
+} // cdk
+ast/expression_node.h: #pragma once
+
+#include <cdk/ast/typed_node.h>
+
+namespace cdk {
+
+  /**
+   * Expressions are typed nodes that have a value.
+   */
+  class expression_node : public typed_node {
+  protected:
+    expression_node(int lineno) noexcept:
+        typed_node(lineno) {
+    }
+
+  };
+
+} // cdk
+ast/sequence_node.h: #pragma once
+
+#include <vector>
+#include <cdk/ast/basic_node.h>
+
+namespace cdk {
+
+  /**
+   * Class representing a node sequence, for instance, in an
+   * instruction block or in an argument list.
+   */
+  class sequence_node : public basic_node {
+    typedef std::vector<basic_node *> sequence_type;
+    sequence_type _nodes;
+
+  public:
+    /**
+     * Constructor for the empty sequence.
+     */
+    sequence_node(int lineno) : basic_node(lineno) { /* EMPTY */ }
+
+    /**
+     * Example: constructor for a left recursive production node:
+     * <pre>
+     * sequence: item {$$ = new Sequence(LINE, $1);}* | sequence item {$$ = new Sequence(LINE, $2, $1);}* </pre>
+     * The constructor of a sequence node takes the same first two
+     * arguments as any other node.
+     * The third argument is the number of child nodes: this
+     * argument is followed by the child nodes themselves. Note
+     * that no effort is made to ensure that the given number of
+     * children matches the actual children passed to the
+     * function. <b>You have been warned...</b>
+     *
+     * @param lineno the source code line number that originated the node
+     * @param item is the single element to be added to the sequence
+     * @param sequence is a previous sequence (nodes will be imported)
+     */
+    sequence_node(int lineno, basic_node *item, sequence_node *sequence = nullptr) :
+        basic_node(lineno) {
+      if (sequence != nullptr)
+        _nodes = sequence->nodes();
+      _nodes.push_back(item);
+    }
+
+  public:
+    /**
+     * This is the destructor for sequence nodes. Note that this
+     * destructor also causes the destruction of the node's
+     * children.
+     */
+    ~sequence_node() {
+      for (auto node: _nodes)
+        delete node;
+      _nodes.clear();
+    }
+
+  public:
+    basic_node *node(size_t i) { return _nodes[i]; }
+
+    sequence_type &nodes() { return _nodes; }
+
+    size_t size() { return _nodes.size(); }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_sequence_node(this, level); }
+
+  };
+
+} // cdk
+ast/literal_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace cdk {
+
+  /**
+   * Class for describing syntactic tree leaves for holding literal
+   * nodes. This is a template class that will be instantiated
+   * by the various classes for holding specific leaves.
+   *
+   * @param StoredType is the type held by the leaf
+   * @see Double, Integer, String
+   */
+  template<typename StoredType>
+  class literal_node : public expression_node {
+    StoredType _value;
+
+  protected:
+    literal_node(int lineno, const StoredType &value) noexcept:
+        expression_node(lineno), _value(value) {
+    }
+
+  public:
+    const StoredType &value() const noexcept { return _value; }
+
+  };
+
+} // cdk
+ast/variable_node.h: #pragma once
+
+#include <cdk/ast/lvalue_node.h>
+#include <string>
+
+namespace cdk {
+
+  /**
+   * Class for describing syntactic tree leaves for holding variables..
+   */
+  class variable_node : public lvalue_node {
+    std::string _name;
+
+  public:
+    variable_node(int lineno, const char *s) noexcept: lvalue_node(lineno), _name(s) {}
+
+    variable_node(int lineno, const std::string &s) noexcept: lvalue_node(lineno), _name(s) {}
+
+    variable_node(int lineno, const std::string *s) noexcept: lvalue_node(lineno), _name(*s) {}
+
+  public:
+    const std::string &name() const { return _name; }
+
+    void accept(basic_ast_visitor *sp, int level) { sp->do_variable_node(this, level); }
+
+  };
+
+} // cdk
+ast/assignment_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+#include <cdk/ast/lvalue_node.h>
+
+namespace cdk {
+
+  /**
+   * Class for describing assignment nodes.
+   */
+  class assignment_node : public expression_node {
+    lvalue_node *_lvalue;
+    expression_node *_rvalue;
+
+  public:
+    assignment_node(int lineno, lvalue_node *lvalue, expression_node *rvalue) noexcept:
+        expression_node(lineno), _lvalue(lvalue), _rvalue(rvalue) {
+    }
+
+    lvalue_node *lvalue() noexcept { return _lvalue; }
+
+    expression_node *rvalue() noexcept { return _rvalue; }
+
+    void accept(basic_ast_visitor *sp, int level) override { sp->do_assignment_node(this, level); }
+
+  };
+
+} // cdk
+ast/binary_operation_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace cdk {
+
+  /**
+   * Class for describing binary operations.
+   */
+  class binary_operation_node : public expression_node {
+    expression_node *_left, *_right;
+
+  public:
+    /**
+     * @param lineno source code line number for this node
+     * @param left first operand
+     * @param right second operand
+     */
+    binary_operation_node(int lineno, expression_node *left, expression_node *right) noexcept:
+        expression_node(lineno), _left(left), _right(right) {
+    }
+
+    expression_node *left() noexcept { return _left; }
+
+    expression_node *right() noexcept { return _right; }
+
+  };
+
+} // cdk
+ast/unary_operation_node.h: #pragma once
+
+#include <cdk/ast/expression_node.h>
+
+namespace cdk {
+
+  /** Class for describing unary operations. */
+  class unary_operation_node : public expression_node {
+    expression_node *_argument;
+
+  public:
+    unary_operation_node(int lineno, expression_node *arg) noexcept:
+        expression_node(lineno), _argument(arg) {
+    }
+
+    expression_node *argument() noexcept { return _argument; }
+
+  };
+
+} // cdk
+ast/typed_node.h: #pragma once
+
+#include <cdk/ast/basic_node.h>
+#include <cdk/types/types.h>
+#include <memory>
+
+namespace cdk {
+
+  /**
+   * Typed nodes store a type description.
+   */
+  class typed_node : public basic_node {
+  protected:
+    // This must be a shared pointer, so that we can anchor a dynamic
+    // object and be able to change/delete it afterward.
+    std::shared_ptr <basic_type> _type;
+
+  public:
+    typed_node(int lineno) noexcept: basic_node(lineno), _type(nullptr) {}
+
+    std::shared_ptr <basic_type> type() noexcept { return _type; }
+
+    void type(std::shared_ptr <basic_type> type) noexcept { _type = type; }
+
+    bool is_typed(typename_type name) const { return _type->name() == name; }
+
+  };
+
+} // cdk
+ast/visitor_decls.h:
+//-- AUTOMATICALLY GENERATED BY CDK -- DO NOT EDIT --
+
+#ifdef __IN_VISITOR_HEADER__
+#ifdef __PURE_VIRTUAL_DECLARATIONS_ONLY__
+  virtual void do_add_node(cdk::add_node *const node, int lvl) = 0;
+  virtual void do_and_node(cdk::and_node *const node, int lvl) = 0;
+  virtual void do_assignment_node(cdk::assignment_node *const node, int lvl) = 0;
+  virtual void do_data_node(cdk::data_node *const node, int lvl) = 0;
+  virtual void do_div_node(cdk::div_node *const node, int lvl) = 0;
+  virtual void do_double_node(cdk::double_node *const node, int lvl) = 0;
+  virtual void do_eq_node(cdk::eq_node *const node, int lvl) = 0;
+  virtual void do_ge_node(cdk::ge_node *const node, int lvl) = 0;
+  virtual void do_gt_node(cdk::gt_node *const node, int lvl) = 0;
+  virtual void do_integer_node(cdk::integer_node *const node, int lvl) = 0;
+  virtual void do_le_node(cdk::le_node *const node, int lvl) = 0;
+  virtual void do_lt_node(cdk::lt_node *const node, int lvl) = 0;
+  virtual void do_mod_node(cdk::mod_node *const node, int lvl) = 0;
+  virtual void do_mul_node(cdk::mul_node *const node, int lvl) = 0;
+  virtual void do_ne_node(cdk::ne_node *const node, int lvl) = 0;
+  virtual void do_nil_node(cdk::nil_node *const node, int lvl) = 0;
+  virtual void do_not_node(cdk::not_node *const node, int lvl) = 0;
+  virtual void do_or_node(cdk::or_node *const node, int lvl) = 0;
+  virtual void do_rvalue_node(cdk::rvalue_node *const node, int lvl) = 0;
+  virtual void do_sequence_node(cdk::sequence_node *const node, int lvl) = 0;
+  virtual void do_string_node(cdk::string_node *const node, int lvl) = 0;
+  virtual void do_sub_node(cdk::sub_node *const node, int lvl) = 0;
+  virtual void do_unary_minus_node(cdk::unary_minus_node *const node, int lvl) = 0;
+  virtual void do_unary_plus_node(cdk::unary_plus_node *const node, int lvl) = 0;
+  virtual void do_variable_node(cdk::variable_node *const node, int lvl) = 0;
+
+#else
+  void do_add_node(cdk::add_node *const node, int lvl);
+  void do_and_node(cdk::and_node *const node, int lvl);
+  void do_assignment_node(cdk::assignment_node *const node, int lvl);
+  void do_data_node(cdk::data_node *const node, int lvl);
+  void do_div_node(cdk::div_node *const node, int lvl);
+  void do_double_node(cdk::double_node *const node, int lvl);
+  void do_eq_node(cdk::eq_node *const node, int lvl);
+  void do_ge_node(cdk::ge_node *const node, int lvl);
+  void do_gt_node(cdk::gt_node *const node, int lvl);
+  void do_integer_node(cdk::integer_node *const node, int lvl);
+  void do_le_node(cdk::le_node *const node, int lvl);
+  void do_lt_node(cdk::lt_node *const node, int lvl);
+  void do_mod_node(cdk::mod_node *const node, int lvl);
+  void do_mul_node(cdk::mul_node *const node, int lvl);
+  void do_ne_node(cdk::ne_node *const node, int lvl);
+  void do_nil_node(cdk::nil_node *const node, int lvl);
+  void do_not_node(cdk::not_node *const node, int lvl);
+  void do_or_node(cdk::or_node *const node, int lvl);
+  void do_rvalue_node(cdk::rvalue_node *const node, int lvl);
+  void do_sequence_node(cdk::sequence_node *const node, int lvl);
+  void do_string_node(cdk::string_node *const node, int lvl);
+  void do_sub_node(cdk::sub_node *const node, int lvl);
+  void do_unary_minus_node(cdk::unary_minus_node *const node, int lvl);
+  void do_unary_plus_node(cdk::unary_plus_node *const node, int lvl);
+  void do_variable_node(cdk::variable_node *const node, int lvl);
+
+#endif /* !defined(__PURE_VIRTUAL_DECLARATIONS_ONLY__) */
+#endif /* __IN_VISITOR_HEADER__ */
+
+postfix_writer.cpp: #include "targets/type_checker.h"
+#include "targets/postfix_writer.h"
+#include ".auto/all_nodes.h"  // all_nodes.h is automatically generated
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_nil_node(cdk::nil_node * const node, int lvl) {
+  // EMPTY
+}
+
+void udf::postfix_writer::do_data_node(cdk::data_node * const node, int lvl) {
+  // EMPTY
+}
+
+void udf::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
+  // EMPTY
+}
+
+void udf::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
+  // EMPTY
+}
+
+void udf::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
+  // EMPTY
+}
+
+void udf::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
+  // EMPTY
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {
+  for (size_t i = 0; i < node->size(); i++) {
+    node->node(i)->accept(this, lvl);
+  }
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
+  _pf.INT(node->value()); // push an integer
+}
+
+void udf::postfix_writer::do_string_node(cdk::string_node * const node, int lvl) {
+  int lbl1;
+
+  /* generate the string */
+  _pf.RODATA(); // strings are DATA readonly
+  _pf.ALIGN(); // make sure we are aligned
+  _pf.LABEL(mklbl(lbl1 = ++_lbl)); // give the string a name
+  _pf.SSTRING(node->value()); // output string characters
+
+  /* leave the address on the stack */
+  _pf.TEXT(); // return to the TEXT segment
+  _pf.ADDR(mklbl(lbl1)); // the string to be printed
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_unary_minus_node(cdk::unary_minus_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl); // determine the value
+  _pf.NEG(); // 2-complement
+}
+
+void udf::postfix_writer::do_unary_plus_node(cdk::unary_plus_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl); // determine the value
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_add_node(cdk::add_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.ADD();
+}
+
+void udf::postfix_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.SUB();
+}
+
+void udf::postfix_writer::do_mul_node(cdk::mul_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.MUL();
+}
+
+void udf::postfix_writer::do_div_node(cdk::div_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.DIV();
+}
+
+void udf::postfix_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.MOD();
+}
+
+void udf::postfix_writer::do_lt_node(cdk::lt_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.LT();
+}
+
+void udf::postfix_writer::do_le_node(cdk::le_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.LE();
+}
+
+void udf::postfix_writer::do_ge_node(cdk::ge_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.GE();
+}
+
+void udf::postfix_writer::do_gt_node(cdk::gt_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.GT();
+}
+
+void udf::postfix_writer::do_ne_node(cdk::ne_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.NE();
+}
+
+void udf::postfix_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->left()->accept(this, lvl);
+  node->right()->accept(this, lvl);
+  _pf.EQ();
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_variable_node(cdk::variable_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  // simplified generation: all variables are global
+  _pf.ADDR(node->name());
+}
+
+void udf::postfix_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->lvalue()->accept(this, lvl);
+  _pf.LDINT(); // depends on type size
+}
+
+void udf::postfix_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->rvalue()->accept(this, lvl); // determine the new value
+  _pf.DUP32();
+  if (new_symbol() == nullptr) {
+    node->lvalue()->accept(this, lvl); // where to store the value
+  } else {
+    _pf.DATA(); // variables are all global and live in DATA
+    _pf.ALIGN(); // make sure we are aligned
+    _pf.LABEL(new_symbol()->name()); // name variable location
+    reset_new_symbol();
+    _pf.SINT(0); // initialize it to 0 (zero)
+    _pf.TEXT(); // return to the TEXT segment
+    node->lvalue()->accept(this, lvl);
+  }
+  _pf.STINT(); // store the value at address
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_program_node(udf::program_node * const node, int lvl) {
+  // Note that Simple doesn't have functions. Thus, it doesn't need
+  // a function node. However, it must start in the main function.
+  // The ProgramNode (representing the whole program) doubles as a
+  // main function node.
+
+  // generate the main function (RTS mandates that its name be "_main")
+  _pf.TEXT();
+  _pf.ALIGN();
+  _pf.GLOBAL("_main", _pf.FUNC());
+  _pf.LABEL("_main");
+  _pf.ENTER(0);  // udf doesn't implement local variables
+
+  node->statements()->accept(this, lvl);
+
+  // end the main function
+  _pf.INT(0);
+  _pf.STFVAL32();
+  _pf.LEAVE();
+  _pf.RET();
+
+  // these are just a few library function imports
+  _pf.EXTERN("readi");
+  _pf.EXTERN("printi");
+  _pf.EXTERN("prints");
+  _pf.EXTERN("println");
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_evaluation_node(udf::evaluation_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl); // determine the value
+  if (node->argument()->is_typed(cdk::TYPE_INT)) {
+    _pf.TRASH(4); // delete the evaluated value
+  } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
+    _pf.TRASH(4); // delete the evaluated value's address
+  } else {
+    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+    exit(1);
+  }
+}
+
+void udf::postfix_writer::do_print_node(udf::print_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl); // determine the value to print
+  if (node->argument()->is_typed(cdk::TYPE_INT)) {
+    _pf.CALL("printi");
+    _pf.TRASH(4); // delete the printed value
+  } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
+    _pf.CALL("prints");
+    _pf.TRASH(4); // delete the printed value's address
+  } else {
+    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+    exit(1);
+  }
+  _pf.CALL("println"); // print a newline
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_read_node(udf::read_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  _pf.CALL("readi");
+  _pf.LDFVAL32();
+  node->argument()->accept(this, lvl);
+  _pf.STINT();
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_while_node(udf::while_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  int lbl1, lbl2;
+  _pf.LABEL(mklbl(lbl1 = ++_lbl));
+  node->condition()->accept(this, lvl);
+  _pf.JZ(mklbl(lbl2 = ++_lbl));
+  node->block()->accept(this, lvl + 2);
+  _pf.JMP(mklbl(lbl1));
+  _pf.LABEL(mklbl(lbl2));
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_if_node(udf::if_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  int lbl1;
+  node->condition()->accept(this, lvl);
+  _pf.JZ(mklbl(lbl1 = ++_lbl));
+  node->block()->accept(this, lvl + 2);
+  _pf.LABEL(mklbl(lbl1));
+}
+
+//---------------------------------------------------------------------------
+
+void udf::postfix_writer::do_if_else_node(udf::if_else_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  int lbl1, lbl2;
+  node->condition()->accept(this, lvl);
+  _pf.JZ(mklbl(lbl1 = ++_lbl));
+  node->thenblock()->accept(this, lvl + 2);
+  _pf.JMP(mklbl(lbl2 = ++_lbl));
+  _pf.LABEL(mklbl(lbl1));
+  node->elseblock()->accept(this, lvl + 2);
+  _pf.LABEL(mklbl(lbl1 = lbl2));
+}
+postfix_writer.h: #pragma once
+
+#include "targets/basic_ast_visitor.h"
+
+#include <sstream>
+#include <cdk/emitters/basic_postfix_emitter.h>
+
+namespace udf {
+
+  //!
+  //! Traverse syntax tree and generate the corresponding assembly code.
+  //!
+  class postfix_writer: public basic_ast_visitor {
+    cdk::symbol_table<udf::symbol> &_symtab;
+    cdk::basic_postfix_emitter &_pf;
+    int _lbl;
+
+  public:
+    postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<udf::symbol> &symtab,
+                   cdk::basic_postfix_emitter &pf) :
+        basic_ast_visitor(compiler), _symtab(symtab), _pf(pf), _lbl(0) {
+    }
+
+  public:
+    ~postfix_writer() {
+      os().flush();
+    }
+
+  private:
+    /** Method used to generate sequential labels. */
+    inline std::string mklbl(int lbl) {
+      std::ostringstream oss;
+      if (lbl < 0)
+        oss << ".L" << -lbl;
+      else
+        oss << "_L" << lbl;
+      return std::move(oss).str();
+    }
+
+  public:
+  // do not edit these lines
+#define __IN_VISITOR_HEADER__
+#include ".auto/visitor_decls.h"       // automatically generated
+#undef __IN_VISITOR_HEADER__
+  // do not edit these lines: end
+
+  };
+
+} // udf
+
+symbol.h: #pragma once
+
+#include <string>
+#include <memory>
+#include <cdk/types/basic_type.h>
+
+namespace udf {
+
+  class symbol {
+    std::shared_ptr<cdk::basic_type> _type;
+    std::string _name;
+
+  public:
+    symbol(std::shared_ptr<cdk::basic_type> type, const std::string &name) :
+        _type(type), _name(name) {
+    }
+
+    virtual ~symbol() {
+      // EMPTY
+    }
+
+    std::shared_ptr<cdk::basic_type> type() const {
+      return _type;
+    }
+    bool is_typed(cdk::typename_type name) const {
+      return _type->name() == name;
+    }
+    const std::string &name() const {
+      return _name;
+    }
+  };
+
+} // udf
+
+type_checker.cpp: #include <string>
+#include "targets/type_checker.h"
+#include ".auto/all_nodes.h"  // automatically generated
+#include <cdk/types/primitive_type.h>
+
+#define ASSERT_UNSPEC { if (node->type() != nullptr && !node->is_typed(cdk::TYPE_UNSPEC)) return; }
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl) {
+  // EMPTY
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_nil_node(cdk::nil_node *const node, int lvl) {
+  // EMPTY
+}
+void udf::type_checker::do_data_node(cdk::data_node *const node, int lvl) {
+  // EMPTY
+}
+void udf::type_checker::do_double_node(cdk::double_node *const node, int lvl) {
+  // EMPTY
+}
+void udf::type_checker::do_not_node(cdk::not_node *const node, int lvl) {
+  // EMPTY
+}
+void udf::type_checker::do_and_node(cdk::and_node *const node, int lvl) {
+  // EMPTY
+}
+void udf::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
+  // EMPTY
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_integer_node(cdk::integer_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+}
+
+void udf::type_checker::do_string_node(cdk::string_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_STRING));
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::processUnaryExpression(cdk::unary_operation_node *const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+  if (!node->argument()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in argument of unary expression");
+
+  // in udf, expressions are always int
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+}
+
+void udf::type_checker::do_unary_minus_node(cdk::unary_minus_node *const node, int lvl) {
+  processUnaryExpression(node, lvl);
+}
+
+void udf::type_checker::do_unary_plus_node(cdk::unary_plus_node *const node, int lvl) {
+  processUnaryExpression(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::processBinaryExpression(cdk::binary_operation_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+  node->left()->accept(this, lvl + 2);
+  if (!node->left()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in left argument of binary expression");
+
+  node->right()->accept(this, lvl + 2);
+  if (!node->right()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of binary expression");
+
+  // in udf, expressions are always int
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+}
+
+void udf::type_checker::do_add_node(cdk::add_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_sub_node(cdk::sub_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_mul_node(cdk::mul_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_div_node(cdk::div_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_mod_node(cdk::mod_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_lt_node(cdk::lt_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_le_node(cdk::le_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_ge_node(cdk::ge_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_gt_node(cdk::gt_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_ne_node(cdk::ne_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+void udf::type_checker::do_eq_node(cdk::eq_node *const node, int lvl) {
+  processBinaryExpression(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_variable_node(cdk::variable_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+  const std::string &id = node->name();
+  std::shared_ptr<udf::symbol> symbol = _symtab.find(id);
+
+  if (symbol != nullptr) {
+    node->type(symbol->type());
+  } else {
+    throw id;
+  }
+}
+
+void udf::type_checker::do_rvalue_node(cdk::rvalue_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+  try {
+    node->lvalue()->accept(this, lvl);
+    node->type(node->lvalue()->type());
+  } catch (const std::string &id) {
+    throw "undeclared variable '" + id + "'";
+  }
+}
+
+void udf::type_checker::do_assignment_node(cdk::assignment_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+
+  try {
+    node->lvalue()->accept(this, lvl);
+  } catch (const std::string &id) {
+    auto symbol = std::make_shared<udf::symbol>(cdk::primitive_type::create(4, cdk::TYPE_INT), id);
+    _symtab.insert(id, symbol);
+    _parent->set_new_symbol(symbol);  // advise parent that a symbol has been inserted
+    node->lvalue()->accept(this, lvl);
+  }
+
+  if (!node->lvalue()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in left argument of assignment expression");
+
+  node->rvalue()->accept(this, lvl + 2);
+  if (!node->rvalue()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of assignment expression");
+
+  // in udf, expressions are always int
+  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_program_node(udf::program_node *const node, int lvl) {
+  // EMPTY
+}
+
+void udf::type_checker::do_evaluation_node(udf::evaluation_node *const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+}
+
+void udf::type_checker::do_print_node(udf::print_node *const node, int lvl) {
+  node->argument()->accept(this, lvl + 2);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_read_node(udf::read_node *const node, int lvl) {
+  try {
+    node->argument()->accept(this, lvl);
+  } catch (const std::string &id) {
+    throw "undeclared variable '" + id + "'";
+  }
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_while_node(udf::while_node *const node, int lvl) {
+  node->condition()->accept(this, lvl + 4);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::type_checker::do_if_node(udf::if_node *const node, int lvl) {
+  node->condition()->accept(this, lvl + 4);
+}
+
+void udf::type_checker::do_if_else_node(udf::if_else_node *const node, int lvl) {
+  node->condition()->accept(this, lvl + 4);
+}
+
+typer_checker.h: #pragma once
+
+#include "targets/basic_ast_visitor.h"
+
+namespace udf {
+
+  /**
+   * Print nodes as XML elements to the output stream.
+   */
+  class type_checker: public basic_ast_visitor {
+    cdk::symbol_table<udf::symbol> &_symtab;
+
+    basic_ast_visitor *_parent;
+
+  public:
+    type_checker(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<udf::symbol> &symtab, basic_ast_visitor *parent) :
+        basic_ast_visitor(compiler), _symtab(symtab), _parent(parent) {
+    }
+
+  public:
+    ~type_checker() {
+      os().flush();
+    }
+
+  protected:
+    void processUnaryExpression(cdk::unary_operation_node *const node, int lvl);
+    void processBinaryExpression(cdk::binary_operation_node *const node, int lvl);
+    template<typename T>
+    void process_literal(cdk::literal_node<T> *const node, int lvl) {
+    }
+
+  public:
+    // do not edit these lines
+#define __IN_VISITOR_HEADER__
+#include ".auto/visitor_decls.h"       // automatically generated
+#undef __IN_VISITOR_HEADER__
+    // do not edit these lines: end
+
+  };
+
+} // udf
+
+//---------------------------------------------------------------------------
+//     HELPER MACRO FOR TYPE CHECKING
+//---------------------------------------------------------------------------
+
+#define CHECK_TYPES(compiler, symtab, node) { \
+  try { \
+    udf::type_checker checker(compiler, symtab, this); \
+    (node)->accept(&checker, 0); \
+  } \
+  catch (const std::string &problem) { \
+    std::cerr << (node)->lineno() << ": " << problem << std::endl; \
+    return; \
+  } \
+}
+
+#define ASSERT_SAFE_EXPRESSIONS CHECK_TYPES(_compiler, _symtab, node)
+xml_writer.cpp: #include <string>
+#include "targets/xml_writer.h"
+#include "targets/type_checker.h"
+#include ".auto/all_nodes.h"  // automatically generated
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_nil_node(cdk::nil_node * const node, int lvl) {
+  // EMPTY
+}
+void udf::xml_writer::do_data_node(cdk::data_node * const node, int lvl) {
+  // EMPTY
+}
+void udf::xml_writer::do_double_node(cdk::double_node * const node, int lvl) {
+  // EMPTY
+}
+void udf::xml_writer::do_not_node(cdk::not_node * const node, int lvl) {
+  // EMPTY
+}
+void udf::xml_writer::do_and_node(cdk::and_node * const node, int lvl) {
+  // EMPTY
+}
+void udf::xml_writer::do_or_node(cdk::or_node * const node, int lvl) {
+  // EMPTY
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {
+  os() << std::string(lvl, ' ') << "<sequence_node size='" << node->size() << "'>" << std::endl;
+  for (size_t i = 0; i < node->size(); i++)
+    node->node(i)->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
+  process_literal(node, lvl);
+}
+
+void udf::xml_writer::do_string_node(cdk::string_node * const node, int lvl) {
+  process_literal(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_unary_operation(cdk::unary_operation_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  node->argument()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
+void udf::xml_writer::do_unary_minus_node(cdk::unary_minus_node * const node, int lvl) {
+  do_unary_operation(node, lvl);
+}
+
+void udf::xml_writer::do_unary_plus_node(cdk::unary_plus_node * const node, int lvl) {
+  do_unary_operation(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_binary_operation(cdk::binary_operation_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  node->left()->accept(this, lvl + 2);
+  node->right()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
+void udf::xml_writer::do_add_node(cdk::add_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_sub_node(cdk::sub_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_mul_node(cdk::mul_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_div_node(cdk::div_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_lt_node(cdk::lt_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_le_node(cdk::le_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_ge_node(cdk::ge_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_gt_node(cdk::gt_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_ne_node(cdk::ne_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+void udf::xml_writer::do_eq_node(cdk::eq_node * const node, int lvl) {
+  do_binary_operation(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_variable_node(cdk::variable_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  os() << std::string(lvl, ' ') << "<" << node->label() << ">" << node->name() << "</" << node->label() << ">" << std::endl;
+}
+
+void udf::xml_writer::do_rvalue_node(cdk::rvalue_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  node->lvalue()->accept(this, lvl + 4);
+  closeTag(node, lvl);
+}
+
+void udf::xml_writer::do_assignment_node(cdk::assignment_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+
+  node->lvalue()->accept(this, lvl);
+  reset_new_symbol();
+
+  node->rvalue()->accept(this, lvl + 4);
+  closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_program_node(udf::program_node * const node, int lvl) {
+  openTag(node, lvl);
+  node->statements()->accept(this, lvl + 4);
+  closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_evaluation_node(udf::evaluation_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  node->argument()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
+void udf::xml_writer::do_print_node(udf::print_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  node->argument()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_read_node(udf::read_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  node->argument()->accept(this, lvl + 2);
+  closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_while_node(udf::while_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  openTag("condition", lvl + 2);
+  node->condition()->accept(this, lvl + 4);
+  closeTag("condition", lvl + 2);
+  openTag("block", lvl + 2);
+  node->block()->accept(this, lvl + 4);
+  closeTag("block", lvl + 2);
+  closeTag(node, lvl);
+}
+
+//---------------------------------------------------------------------------
+
+void udf::xml_writer::do_if_node(udf::if_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  openTag("condition", lvl + 2);
+  node->condition()->accept(this, lvl + 4);
+  closeTag("condition", lvl + 2);
+  openTag("then", lvl + 2);
+  node->block()->accept(this, lvl + 4);
+  closeTag("then", lvl + 2);
+  closeTag(node, lvl);
+}
+
+void udf::xml_writer::do_if_else_node(udf::if_else_node * const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  openTag("condition", lvl + 2);
+  node->condition()->accept(this, lvl + 4);
+  closeTag("condition", lvl + 2);
+  openTag("then", lvl + 2);
+  node->thenblock()->accept(this, lvl + 4);
+  closeTag("then", lvl + 2);
+  openTag("else", lvl + 2);
+  node->elseblock()->accept(this, lvl + 4);
+  closeTag("else", lvl + 2);
+  closeTag(node, lvl);
+}
+xml_writer.h: #pragma once
+
+#include "targets/basic_ast_visitor.h"
+#include <cdk/ast/basic_node.h>
+
+namespace udf {
+
+  /**
+   * Print nodes as XML elements to the output stream.
+   */
+  class xml_writer: public basic_ast_visitor {
+    cdk::symbol_table<udf::symbol> &_symtab;
+
+  public:
+    xml_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<udf::symbol> &symtab) :
+        basic_ast_visitor(compiler), _symtab(symtab) {
+    }
+
+  public:
+    ~xml_writer() {
+      os().flush();
+    }
+
+  private:
+    void openTag(const std::string &tag, int lvl) {
+      os() << std::string(lvl, ' ') + "<" + tag + ">" << std::endl;
+    }
+    void openTag(const cdk::basic_node *node, int lvl) {
+      openTag(node->label(), lvl);
+    }
+    void closeTag(const std::string &tag, int lvl) {
+      os() << std::string(lvl, ' ') + "</" + tag + ">" << std::endl;
+    }
+    void closeTag(const cdk::basic_node *node, int lvl) {
+      closeTag(node->label(), lvl);
+    }
+
+  protected:
+    void do_binary_operation(cdk::binary_operation_node *const node, int lvl);
+    void do_unary_operation(cdk::unary_operation_node *const node, int lvl);
+    template<typename T>
+    void process_literal(cdk::literal_node<T> *const node, int lvl) {
+      os() << std::string(lvl, ' ') << "<" << node->label() << ">" << node->value() << "</" << node->label() << ">" << std::endl;
+    }
+
+  public:
+    // do not edit these lines
+#define __IN_VISITOR_HEADER__
+#include ".auto/visitor_decls.h"       // automatically generated
+#undef __IN_VISITOR_HEADER__
+    // do not edit these lines: end
+
+  };
+
+} // udf
+

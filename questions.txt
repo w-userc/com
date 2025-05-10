@@ -1,0 +1,1 @@
+keep `accept` method just a declaration or inline definition?
